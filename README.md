@@ -6,7 +6,8 @@ The goal is to study control stability, accuracy, and smoothness rather than gam
 
 ## How To Run
 ```bash
-git clone https://github.com/LeoSenthan/RecoilSmootherEvaluation cd CONTROLLER_COMPARISON_USING_RECOIL_SMOOTHING
+git clone https://github.com/LeoSenthan/RecoilSmootherEvaluation
+cd RECOILSMOOTHEREVALUATION
 pip install -r requirements.txt
 python scripts/run_Baselines.py
 ```
@@ -51,6 +52,15 @@ Thank You Very Much
 - No planning or learning
 - Serves as a simple baseline
 
+### Mathematics
+Current Pos = After current shot fired (x1,y1) 
+Prev Pos = Before current shot fired (x2,y2)
+Kp = Proportional reaction constant e.g. 0.8
+Kd = Smoothness constant to combat noise e.g. 0.1
+Action = Compensation returned to be applied to Current Pos (x3,y3)
+
+Action = - ( Kp * Current Pos) - Kd * (Current Pos - Prev Pos)
+
 
 ## Genetic Algorithm (GA) Controller
 
@@ -62,6 +72,8 @@ Thank You Very Much
 - Evolves a population over several generations
 - Uses deterministic recoil during training
 
+### Mathematics
+
 ## Rolling Horizon Evolutionary Algorithm (RHEA) Controller
 
 ![RHEA Controller](diagrams/RHEA.png)
@@ -72,6 +84,13 @@ Thank You Very Much
 - Evaluates candidates using multiple noisy rollouts
 - Trades computation time for adaptability
 
+### Mathematics
+
+# Design Decisions
+
+- Pixel-space evaluation chosen to match raw recoil data
+- Smoothness penalty added to discourage jittery compensation
+- Equalized evolutionary budgets to ensure fair comparison
 
 # Fairness & Evaluation Budget
 
@@ -110,27 +129,37 @@ results/
 - Identical scaling for fair visual comparison
 
 # Key Findings
+
+## Quantitative Comparison (Alternator)
+
+| Controller | Noise σ | MSE ↓ | Max Deviation ↓ | Smoothness ↓ | Relative Compute Cost |
+|------------|---------|-------|-----------------|--------------|-----------------------|
+| Closed Loop|   0.0   | 843.83|      40.29      |    1781.51   |       Very Low        |
+|     GA     |   0.0   | 39.66 |       9.24      |     26.18    |        Medium         |
+|    RHEA    |   0.0   | 0.0059|       0.11      |    0.0009    |         High          |
+| Closed Loop|   1.0   | 843.47|      40.35      |    1781.54   |       Very Low        |
+|     GA     |   1.0   | 51.79 |      11.03      |     34.74    |        Medium         |
+|    RHEA    |   1.0   | 8.63  |       5.59      |     13.62    |         High          |
+
+
 ![Alternator-Noise-0.0](results/plots/alternator/0.0/alternator_noise0.0_seed0_comparison.png)
 
-As you can see based on the diagram with no noise the Closed Loop controller performs the worst with data from corresponding JSON file recording "mse": 843.8315261896252, "max_dev": 40.29392499575498 and "smoothness": 1781.5122473879837. 
+With no noise (σ = 0.0), RHEA dramatically outperforms both baselines.  
+Compared to closed-loop control, RHEA reduces MSE by **over 99.99%** and maximum deviation by **~350×**, while producing an almost perfectly smooth trajectory.
 
-GA performs far better with data from corresponding JSON file recording "mse": 39.66193395023402, "max_dev": 9.237087877749532 and "smoothness": 26.18346527720866. 
+GA achieves strong performance under deterministic recoil, reducing MSE by **~95%** relative to closed-loop control, but remains an order of magnitude less accurate than RHEA.
 
-The RHEA controller significantly outperforms the other controllers with data from corresponding JSON file recording "mse": 0.005858456851596085, "max_dev": 0.11226773148792975 and "smoothness": 0.0009015391284114397.
-
-Overall the Closed Loop controller severely lags behind and the RHEA controller consistently outperforms the GA.
 
 ![Alternator-Noise-0.5](results/plots/alternator/0.5/alternator_noise0.5_seed0_comparison.png)
 
-As you can see based on the diagram with noise of 0.5 standard deviations the Closed Loop controller performs the worst with data from corresponding JSON file recording "mse": 843.6517499534484, "max_dev": 40.32120016491354 and "smoothness": 1781.4762951328512 showing that the noise had very negligible impact on the spread compared to the results during no noise.
+At moderate noise (σ = 0.5), closed-loop control remains largely unaffected due to its reactive nature but continues to exhibit large sustained deviation.
 
-GA performs far better with data from corresponding JSON file recording "mse": 45.239131297834554, "max_dev": 10.066736078532912 and "smoothness": 27.70697050479335 compared to the closed loop controller and the noise had a minor impact on the spread of bullets.
-
-The RHEA controller still consistently outperforms the other 2 controllers with data from corresponding JSON file recording "mse": 2.550424302380239, "max_dev": 3.0033756824885267, "smoothness": 3.419730275888363 showing that RHEA is robust to noise.
+GA shows a modest degradation in accuracy and smoothness, while RHEA maintains robust performance, achieving a **~99.7% lower MSE** than closed-loop control and a **~45% reduction** compared to GA.
 
 ![Alternator-Noise-1.0](results/plots/alternator/1.0/alternator_noise1.0_seed0_comparison.png)
 
-As you can see based on the diagram  the RHEA controller still is the strongest controller out of the 3 as the Closed Loop controller has metrics of "mse": 843.4739815484913, "max_dev": 40.34848440619182, "smoothness": 1781.5431253479148 and the GA controller has metrics of "mse": 51.789423507912176, "max_dev": 11.02611424257243,"smoothness": 34.744330249759464 while the RHEA controller has metrics of  "mse": 8.6257105459546, "max_dev": 5.585265922985584,"smoothness": 13.616415292672519 showing that the RHEA controller is still optimal when handling noise.
+Under high noise (σ = 1.0), RHEA continues to outperform both alternatives despite performance degradation.  
+While GA experiences increasing deviation due to its offline nature, RHEA maintains a **~6× lower MSE** and **~2× lower maximum deviation**, demonstrating superior robustness to uncertainty.
 
 ![High-Level-Findings](diagrams/high_level_comparison.png)
 
@@ -138,12 +167,19 @@ As you can see based on the diagram  the RHEA controller still is the strongest 
 - GA produces smooth, near-optimal trajectories for deterministic recoil.
 - RHEA adapts better to noise but is computationally expensive.
 
+# Limitations
+
+- No human reaction delay
+- Deterministic recoil during GA training
+- Simplified physics model
+- Assumes fire rate is constant.
+
 # Conclusion
 
 - Offline optimization excels in predictable environments.
 - Online planning improves robustness under uncertainty.
-- Smoothness penalties significantly affect perceived stability
-- Evaluation budget matters more than algorithm choice
+- Smoothness penalties significantly affect perceived stability.
+- Evaluation budget matters more than algorithm choice.
 
 # Extensions
 

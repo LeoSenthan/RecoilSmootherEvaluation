@@ -1,2 +1,2 @@
-5. Detailed Readme using diagrams stored in docs comparing all 3 methods to show the actual project overall and conclusion.
-
+# FILL IN MATHEMATICS SECTIONS FOR GA AND RHEA
+# ADD COMPUTE TIMERS TO SEE HOW LONG EACH TAKES
