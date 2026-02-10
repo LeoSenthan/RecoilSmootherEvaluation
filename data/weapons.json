@@ -1,0 +1,54 @@
+{
+    "r99": {
+        "file": "r99.npy",
+        "size": 30
+    },
+    "r301": {
+        "file": "r301.npy",
+        "size": 31
+    },
+    "flatline": {
+        "file": "flatline.npy",
+        "size": 29
+    },
+    "volt": {
+        "file": "volt.npy",
+        "size": 26
+    },
+    "alternator": {
+        "file": "alternator.npy",
+        "size": 27
+    },
+    "devotion_tc": {
+        "file": "devotion_tc.npy",
+        "size": 48
+    },
+    "havoc_tc": {
+        "file": "havoc_tc.npy",
+        "size": 36
+    },
+    "prowler": {
+        "file": "prowler.npy",
+        "size": 35
+    },
+    "re45": {
+        "file": "re45.npy",
+        "size": 25
+    },
+    "spitfire": {
+        "file": "spitfire.npy",
+        "size": 55
+    },
+    "lstar": {
+        "file": "lstar.npy",
+        "size": 26
+    },
+    "rampage": {
+        "file": "rampage.npy",
+        "size": 40
+    },
+    "car": {
+        "file": "car.npy",
+        "size": 27
+    }
+}

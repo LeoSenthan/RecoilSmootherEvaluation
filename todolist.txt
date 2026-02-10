@@ -1,0 +1,2 @@
+5. Detailed Readme using diagrams stored in docs comparing all 3 methods to show the actual project overall and conclusion.
+
