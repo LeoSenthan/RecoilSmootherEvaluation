@@ -11,6 +11,8 @@ cd RECOILSMOOTHEREVALUATION
 pip install -r requirements.txt
 python scripts/run_Baselines.py
 ```
+## TL;DR:
+This project benchmarks three control strategies—Closed-Loop (PD), Genetic Algorithm (GA), and Rolling Horizon Evolutionary Algorithm (RHEA)—for stabilizing simulated Apex Legends weapon recoil. It evaluates each controller under varying noise levels using metrics such as mean squared error, maximum deviation, and trajectory smoothness. GA produces smooth offline trajectories for deterministic recoil, while RHEA adapts online to noise with near-perfect accuracy. The project emphasizes control systems, evolutionary optimization, experimental fairness, and metric-driven evaluation, providing reproducible results and structured logging suitable for research or engineering applications.
 
 ## Problem Overview
 
@@ -52,15 +54,6 @@ Thank You Very Much
 - No planning or learning
 - Serves as a simple baseline
 
-### Mathematics
-Current Pos = After current shot fired (x1,y1) 
-Prev Pos = Before current shot fired (x2,y2)
-Kp = Proportional reaction constant e.g. 0.8
-Kd = Smoothness constant to combat noise e.g. 0.1
-Action = Compensation returned to be applied to Current Pos (x3,y3)
-
-Action = - ( Kp * Current Pos) - Kd * (Current Pos - Prev Pos)
-
 
 ## Genetic Algorithm (GA) Controller
 
@@ -72,8 +65,6 @@ Action = - ( Kp * Current Pos) - Kd * (Current Pos - Prev Pos)
 - Evolves a population over several generations
 - Uses deterministic recoil during training
 
-### Mathematics
-
 ## Rolling Horizon Evolutionary Algorithm (RHEA) Controller
 
 ![RHEA Controller](diagrams/RHEA.png)
@@ -84,13 +75,122 @@ Action = - ( Kp * Current Pos) - Kd * (Current Pos - Prev Pos)
 - Evaluates candidates using multiple noisy rollouts
 - Trades computation time for adaptability
 
-### Mathematics
 
 # Design Decisions
 
 - Pixel-space evaluation chosen to match raw recoil data
 - Smoothness penalty added to discourage jittery compensation
 - Equalized evolutionary budgets to ensure fair comparison
+
+# Mathematics
+
+This section formalizes the control strategies used in the project: Closed-Loop (PD), Genetic Algorithm (GA), and Rolling Horizon Evolutionary Algorithm (RHEA).
+
+
+## 1. Closed-Loop Controller (PD)
+
+The controller reacts to current cursor error and smooths noise using a derivative term:
+
+\[
+\text{Action}_t = - K_p \cdot \text{Pos}_t - K_d \cdot (\text{Pos}_t - \text{Pos}_{t-1})
+\]
+
+Where:  
+- \( \text{Pos}_t \) = cursor position after shot \(t\)  
+- \( \text{Pos}_{t-1} \) = cursor position after previous shot  
+- \( K_p \) = proportional gain  
+- \( K_d \) = derivative/smoothness gain  
+
+> The action is applied to reduce deviation and ensure smooth movement.
+
+
+## 2. Genetic Algorithm (GA) Controller
+
+Goal: Find an optimal sequence of compensations \(\mathbf{U} = [\mathbf{u}_1, \mathbf{u}_2, ..., \mathbf{u}_N]\) for a full magazine.
+
+Position Update per Shot:
+\[
+\mathbf{p}_0 = [0,0], \quad
+\mathbf{p}_t = \mathbf{p}_{t-1} + \mathbf{r}_t + \mathbf{u}_t
+\]
+
+Where:  
+- \(\mathbf{r}_t\) = recoil displacement for shot \(t\)  
+- \(\mathbf{u}_t\) = compensation applied  
+
+Fitness Function:
+\[
+\text{Fitness}(\mathbf{U}) = \sum_{t=1}^{N} \|\mathbf{p}_t\|^2 + \lambda \sum_{t=2}^{N} \|\mathbf{p}_t - \mathbf{p}_{t-1}\|^2
+\]
+
+- First term = cumulative squared deviation (accuracy)  
+- Second term = smoothness penalty (\(\lambda = \text{smoothness\_weight}\))  
+
+Evolutionary Operators:
+- Selection: Top \(E\%\) genomes  
+- Crossover:
+\[
+\mathbf{u}^{\text{child}}_t = 
+\begin{cases}
+\mathbf{u}^{p1}_t & \text{with probability 0.5} \\
+\mathbf{u}^{p2}_t & \text{otherwise}
+\end{cases}
+\]  
+- Mutation:
+\[
+\mathbf{u}_t \gets \mathbf{u}_t + \epsilon_t, \quad \epsilon_t \sim \mathcal{N}(0, \sigma_t^2)
+\]
+
+Optimal Sequence:
+\[
+\mathbf{U}^* = \arg\min_{\mathbf{U}} \text{Fitness}(\mathbf{U})
+\]
+
+> GA produces a smooth, near-optimal trajectory offline.
+
+## 3. Rolling Horizon Evolutionary Algorithm (RHEA) Controller
+
+Goal: Online planning over a short horizon \(H\); only the first action is applied each shot.
+
+Horizon Genome:
+\[
+\mathbf{U}_t = [\mathbf{u}_t, \mathbf{u}_{t+1}, ..., \mathbf{u}_{t+H-1}]
+\]
+
+Position Update per Rollout:
+\[
+\mathbf{p}_{t+i}^{(r)} = \mathbf{p}_{t+i-1}^{(r)} + \mathbf{r}_{t+i} + \mathbf{u}_{t+i}, \quad i = 0..H-1
+\]  
+Include noise if present: \(\mathbf{r}_t \sim \mathbf{r}_t + \mathcal{N}(0, \sigma^2)\)
+
+Fitness per Genome:
+\[
+\text{Fitness}(\mathbf{U}_t) = \frac{1}{R} \sum_{r=1}^R \left[ \sum_{i=0}^{H-1} \|\mathbf{p}_{t+i}^{(r)}\|^2 + \lambda \sum_{i=1}^{H-1} \|\mathbf{p}_{t+i}^{(r)} - \mathbf{p}_{t+i-1}^{(r)}\|^2 \right]
+\]
+
+Where:  
+- \(R\) = number of rollouts per genome  
+- \(\lambda\) = smoothness weight  
+
+Action Selection:
+\[
+\mathbf{a}_t = \mathbf{u}_t^*, \quad \mathbf{U}_t^* = \arg\min_{\mathbf{U}_t} \text{Fitness}(\mathbf{U}_t)
+\]
+
+> Only the first action \(\mathbf{a}_t\) is applied; the algorithm replans at the next shot with updated position.
+
+
+## 4. Summary Table
+
+| Controller | Action Update Formula | Key Notes |
+|------------|---------------------|-----------|
+| Closed-Loop (PD) | \(-K_p \cdot \text{Pos}_t - K_d (\text{Pos}_t - \text{Pos}_{t-1})\) | Simple reactive feedback |
+| GA | \(\mathbf{U}^* = \arg\min_\mathbf{U} \sum \|\mathbf{p}_t\|^2 + \lambda \sum \|\Delta \mathbf{p}_t\|^2\) | Offline trajectory optimization |
+| RHEA | \(\mathbf{a}_t = \mathbf{u}_t^*, \mathbf{U}_t^* = \arg\min_{\mathbf{U}_t} \text{Fitness}(\mathbf{U}_t)\) | Online planning over horizon H |
+
+
+> This unified formulation shows how each controller balances **accuracy, smoothness, and adaptability** under different levels of noise.
+
 
 # Fairness & Evaluation Budget
 
