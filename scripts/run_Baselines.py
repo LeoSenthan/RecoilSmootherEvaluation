@@ -129,7 +129,6 @@ for weapon in WEAPONS:
             plt.savefig(os.path.join(plot_dir, plot_filename))
             plt.close()
 
-            print(f"Saved individual plot for {weapon_name} ({controller.__class__.__name__}, noise={noise})")
 
         # Plot combined overlay for this noise level
         plt.figure(figsize=(6, 8))
@@ -144,5 +143,3 @@ for weapon in WEAPONS:
         combined_plot_filename = f"{weapon_name}_noise{noise}_seed{seed}_comparison.png"
         plt.savefig(os.path.join(plot_dir, combined_plot_filename))
         plt.close()
-
-        print(f"Saved combined overlay plot for {weapon_name}, noise={noise}")

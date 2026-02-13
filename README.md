@@ -241,6 +241,31 @@ results/
 |     GA     |   1.0   | 51.79 |      11.03      |     34.74    |        Medium         |
 |    RHEA    |   1.0   | 8.63  |       5.59      |     13.62    |         High          |
 
+## Compute Cost Analysis
+
+Average wall-clock runtime per magazine was measured over 10 runs (alternator, σ = 0.0).
+
+| Controller        | Avg Runtime (ms) | Std (ms) | Relative Cost |
+| ----------------- | ---------------- | -------- | ------------- |
+| Closed Loop       | **1.75**         | ±0.64    | Very Low      |
+| GA (incl. evolve) | **360.62**       | ±34.51   | Medium        |
+| RHEA              | **4721.27**      | ±388.31  | High          |
+
+-Closed-loop control runs in ~1.7 ms, making it effectively real-time.
+-GA requires ~361 ms per magazine (offline feasible).
+-RHEA requires ~4.7 seconds, making it ~13× slower than GA and unsuitable for real-time execution under current settings.
+
+The higher cost of RHEA stems from:
+-Re-optimizing at every shot
+-Planning over a future horizon
+-Evaluating multiple noisy rollouts per candidate
+
+This quantifies the core trade-off explored in this project:
+
+Accuracy and robustness increase with computational effort.
+
+Under typical real-time constraints (~16.6 ms per frame at 60 FPS), only the closed-loop controller is immediately deployable without further optimization.
+
 
 ![Alternator-Noise-0.0](results/plots/alternator/0.0/alternator_noise0.0_seed0_comparison.png)
 
