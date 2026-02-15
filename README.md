@@ -4,6 +4,10 @@ RecoilControllerComparison
 This project compares multiple control strategies for recoil smoothing using simulated Apex Legends weapon recoil patterns. Closed-loop feedback control, a Genetic Algorithm (GA), and a Rolling Horizon Evolutionary Algorithm (RHEA) are evaluated based on how effectively they keep the crosshair near the target centre (0,0) under varying noise levels.
 The goal is to study control stability, accuracy, and smoothness rather than game automation and comparing the 3 controllers factoring in compute time.
 
+## TL;DR:
+This project benchmarks three control strategies—Closed-Loop (PD), Genetic Algorithm (GA), and Rolling Horizon Evolutionary Algorithm (RHEA)—for stabilizing simulated Apex Legends weapon recoil. It evaluates each controller under varying noise levels using metrics such as mean squared error, maximum deviation, and trajectory smoothness. GA produces smooth offline trajectories for deterministic recoil, while RHEA adapts online to noise with near-perfect accuracy. The project emphasizes control systems, evolutionary optimization, experimental fairness, and metric-driven evaluation, providing reproducible results and structured logging suitable for research or engineering applications.
+
+
 ## How To Run
 ```bash
 git clone https://github.com/LeoSenthan/RecoilSmootherEvaluation
@@ -11,8 +15,6 @@ cd RECOILSMOOTHEREVALUATION
 pip install -r requirements.txt
 python scripts/run_Baselines.py
 ```
-## TL;DR:
-This project benchmarks three control strategies—Closed-Loop (PD), Genetic Algorithm (GA), and Rolling Horizon Evolutionary Algorithm (RHEA)—for stabilizing simulated Apex Legends weapon recoil. It evaluates each controller under varying noise levels using metrics such as mean squared error, maximum deviation, and trajectory smoothness. GA produces smooth offline trajectories for deterministic recoil, while RHEA adapts online to noise with near-perfect accuracy. The project emphasizes control systems, evolutionary optimization, experimental fairness, and metric-driven evaluation, providing reproducible results and structured logging suitable for research or engineering applications.
 
 ## Problem Overview
 
@@ -179,19 +181,6 @@ Action Selection:
 
 > Only the first action \(\mathbf{a}_t\) is applied; the algorithm replans at the next shot with updated position.
 
-
-## 4. Summary Table
-
-| Controller | Action Update Formula | Key Notes |
-|------------|---------------------|-----------|
-| Closed-Loop (PD) | \(-K_p \cdot \text{Pos}_t - K_d (\text{Pos}_t - \text{Pos}_{t-1})\) | Simple reactive feedback |
-| GA | \(\mathbf{U}^* = \arg\min_\mathbf{U} \sum \|\mathbf{p}_t\|^2 + \lambda \sum \|\Delta \mathbf{p}_t\|^2\) | Offline trajectory optimization |
-| RHEA | \(\mathbf{a}_t = \mathbf{u}_t^*, \mathbf{U}_t^* = \arg\min_{\mathbf{U}_t} \text{Fitness}(\mathbf{U}_t)\) | Online planning over horizon H |
-
-
-> This unified formulation shows how each controller balances **accuracy, smoothness, and adaptability** under different levels of noise.
-
-
 # Fairness & Evaluation Budget
 
 To ensure fair comparison:
@@ -247,9 +236,9 @@ Average wall-clock runtime per magazine was measured over 10 runs (alternator, �
 
 | Controller        | Avg Runtime (ms) | Std (ms) | Relative Cost |
 | ----------------- | ---------------- | -------- | ------------- |
-| Closed Loop       | **1.75**         | ±0.64    | Very Low      |
-| GA (incl. evolve) | **360.62**       | ±34.51   | Medium        |
-| RHEA              | **4721.27**      | ±388.31  | High          |
+| Closed Loop       |   1.75           | ±0.64    | Very Low      |
+| GA (incl. evolve) |   360.62         | ±34.51   | Medium        |
+| RHEA              |   4721.27        | ±388.31  | High          |
 
 -Closed-loop control runs in ~1.7 ms, making it effectively real-time.
 -GA requires ~361 ms per magazine (offline feasible).
@@ -322,6 +311,6 @@ Minimal dependencies:
 It is designed as a learning and research project, not for gameplay automation.
 
 # Credits
-The recoil data for the weapons was originally sourced from the Apex Legends Recoil repository:
+The recoil data for the weapons was originally sourced from the Apex Legends Recoil repository by metaflow:
 [https://github.com/metaflow/apex-recoil](https://github.com/metaflow/apex-recoil)
 Thank You Very Much
