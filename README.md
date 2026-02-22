@@ -130,7 +130,9 @@ Fitness Function:
 ```
 
 - First term = cumulative squared deviation (accuracy)  
-- Second term = smoothness penalty $(\(\lambda = \text{smoothness\_weight}\))$
+- Second term = smoothness penalty
+  
+  sum of ((compensation applied - line of best fit) * smoothness weight )
 
 Evolutionary Operators:
 - Selection: Top $\(E\%\)$ genomes  
