@@ -1,3 +1,5 @@
+RecoilControllerComparison
+
 # Overview
 This project compares multiple control strategies for recoil smoothing using simulated Apex Legends weapon recoil patterns. Closed-loop feedback control, a Genetic Algorithm (GA), and a Rolling Horizon Evolutionary Algorithm (RHEA) are evaluated based on how effectively they keep the crosshair near the target centre (0,0) under varying noise levels.
 The goal is to study control stability, accuracy, and smoothness rather than game automation and comparing the 3 controllers factoring in compute time.
@@ -91,60 +93,65 @@ This section formalizes the control strategies used in the project: Closed-Loop 
 
 The controller reacts to current cursor error and smooths noise using a derivative term:
 
-\[
+
+$$
 \text{Action}_t = - K_p \cdot \text{Pos}_t - K_d \cdot (\text{Pos}_t - \text{Pos}_{t-1})
-\]
+$$
 
 Where:  
-- \( \text{Pos}_t \) = cursor position after shot \(t\)  
-- \( \text{Pos}_{t-1} \) = cursor position after previous shot  
-- \( K_p \) = proportional gain  
-- \( K_d \) = derivative/smoothness gain  
+- $\( \text{Pos}_t \)$ = cursor position after shot $\(t\)$
+- $\( \text{Pos}_{t-1} \)$ = cursor position after previous shot  
+- $\( K_p \)$ = proportional gain  
+- $\( K_d \)$ = derivative/smoothness gain  
 
 > The action is applied to reduce deviation and ensure smooth movement.
 
 
 ## 2. Genetic Algorithm (GA) Controller
 
-Goal: Find an optimal sequence of compensations \(\mathbf{U} = [\mathbf{u}_1, \mathbf{u}_2, ..., \mathbf{u}_N]\) for a full magazine.
+Goal: Find an optimal sequence of compensations $\(\mathbf{U} = [\mathbf{u}_1, \mathbf{u}_2, ..., \mathbf{u}_N]\)$ for a full magazine.
 
 Position Update per Shot:
-\[
+```math
 \mathbf{p}_0 = [0,0], \quad
 \mathbf{p}_t = \mathbf{p}_{t-1} + \mathbf{r}_t + \mathbf{u}_t
-\]
+```
 
-Where:  
-- \(\mathbf{r}_t\) = recoil displacement for shot \(t\)  
-- \(\mathbf{u}_t\) = compensation applied  
+Where:
+$\(\mathbf{r}_t\)$ = recoil displacement for shot $\(t\)$
+
+$\(\mathbf{u}_t\)$ = compensation applied
+
 
 Fitness Function:
-\[
+
+```math
 \text{Fitness}(\mathbf{U}) = \sum_{t=1}^{N} \|\mathbf{p}_t\|^2 + \lambda \sum_{t=2}^{N} \|\mathbf{p}_t - \mathbf{p}_{t-1}\|^2
-\]
+```
 
 - First term = cumulative squared deviation (accuracy)  
-- Second term = smoothness penalty (\(\lambda = \text{smoothness\_weight}\))  
+- Second term = smoothness penalty $(\(\lambda = \text{smoothness\_weight}\))$
 
 Evolutionary Operators:
-- Selection: Top \(E\%\) genomes  
+- Selection: Top $\(E\%\)$ genomes  
 - Crossover:
-\[
+```math
 \mathbf{u}^{\text{child}}_t = 
 \begin{cases}
 \mathbf{u}^{p1}_t & \text{with probability 0.5} \\
 \mathbf{u}^{p2}_t & \text{otherwise}
 \end{cases}
-\]  
+```
+
 - Mutation:
-\[
+```math
 \mathbf{u}_t \gets \mathbf{u}_t + \epsilon_t, \quad \epsilon_t \sim \mathcal{N}(0, \sigma_t^2)
-\]
+```
 
 Optimal Sequence:
-\[
+```math
 \mathbf{U}^* = \arg\min_{\mathbf{U}} \text{Fitness}(\mathbf{U})
-\]
+```
 
 > GA produces a smooth, near-optimal trajectory offline.
 
@@ -153,31 +160,31 @@ Optimal Sequence:
 Goal: Online planning over a short horizon \(H\); only the first action is applied each shot.
 
 Horizon Genome:
-\[
+```math
 \mathbf{U}_t = [\mathbf{u}_t, \mathbf{u}_{t+1}, ..., \mathbf{u}_{t+H-1}]
-\]
+```
 
 Position Update per Rollout:
-\[
+```math
 \mathbf{p}_{t+i}^{(r)} = \mathbf{p}_{t+i-1}^{(r)} + \mathbf{r}_{t+i} + \mathbf{u}_{t+i}, \quad i = 0..H-1
-\]  
-Include noise if present: \(\mathbf{r}_t \sim \mathbf{r}_t + \mathcal{N}(0, \sigma^2)\)
+```
+Include noise if present: $\(\mathbf{r}_t \sim \mathbf{r}_t + \mathcal{N}(0, \sigma^2)\)$
 
 Fitness per Genome:
-\[
+```math
 \text{Fitness}(\mathbf{U}_t) = \frac{1}{R} \sum_{r=1}^R \left[ \sum_{i=0}^{H-1} \|\mathbf{p}_{t+i}^{(r)}\|^2 + \lambda \sum_{i=1}^{H-1} \|\mathbf{p}_{t+i}^{(r)} - \mathbf{p}_{t+i-1}^{(r)}\|^2 \right]
-\]
+```
 
 Where:  
-- \(R\) = number of rollouts per genome  
-- \(\lambda\) = smoothness weight  
+- $\(R\)$ = number of rollouts per genome  
+- $\(\lambda\)$ = smoothness weight  
 
 Action Selection:
-\[
+```math
 \mathbf{a}_t = \mathbf{u}_t^*, \quad \mathbf{U}_t^* = \arg\min_{\mathbf{U}_t} \text{Fitness}(\mathbf{U}_t)
-\]
+```
 
-> Only the first action \(\mathbf{a}_t\) is applied; the algorithm replans at the next shot with updated position.
+> Only the first action $\(\mathbf{a}_t\)$ is applied; the algorithm replans at the next shot with updated position.
 
 # Fairness & Evaluation Budget
 
@@ -202,11 +209,13 @@ All metrics are saved as structured JSON logs.
 This allows direct comparison across controllers, weapons, and noise settings.
 
 ## Results & Logging Structure
+```
 results/
 ├── plots/
 │   └── <weapon>/<noise>/<controller>.png
 └── logs/
     └── <controller>/<weapon>/noise_<level>.json
+```
 
 
 # Visualization
