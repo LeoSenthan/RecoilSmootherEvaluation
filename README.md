@@ -290,6 +290,13 @@ While GA experiences increasing deviation due to its offline nature, RHEA mainta
 - GA produces smooth, near-optimal trajectories for deterministic recoil.
 - RHEA adapts better to noise but is computationally expensive.
 
+## Key Findings Summary
+
+- RHEA reduced MSE by 99.99% compared to PD in deterministic recoil.
+- GA achieved 95% MSE reduction but degraded as noise increased/
+- RHEA maintanged roughly 6x lower MSE than GA under std = 1.0 noise.
+
+
 # Limitations
 
 - No human reaction delay
